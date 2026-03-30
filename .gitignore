@@ -1,0 +1,8 @@
+# macOS 编译生成的文件
+StockTicker
+.DS_Store
+
+# IDE 配置
+.vscode/
+.idea/
+*.swp
