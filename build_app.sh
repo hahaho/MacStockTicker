@@ -39,6 +39,8 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
     <string>com.hahaho.${APP_NAME}</string>
     <key>CFBundleName</key>
     <string>${APP_NAME}</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
@@ -52,6 +54,73 @@ cat > "${CONTENTS_DIR}/Info.plist" <<EOF
 </dict>
 </plist>
 EOF
+
+echo "正在生成基础应用图标..."
+ICONSET_DIR="AppIcon.iconset"
+mkdir -p "${ICONSET_DIR}"
+
+# 创建一个带股票图表的精美图标
+cat > create_icon.swift <<'EOF'
+import AppKit
+
+let size = CGSize(width: 1024, height: 1024)
+let image = NSImage(size: size)
+image.lockFocus()
+
+// 1. 绘制圆角矩形背景 (深灰色，带一点质感)
+let bounds = NSRect(origin: .zero, size: size)
+let bgPath = NSBezierPath(roundedRect: bounds, xRadius: 224, yRadius: 224)
+NSColor(red: 0.15, green: 0.15, blue: 0.17, alpha: 1.0).setFill()
+bgPath.fill()
+
+// 2. 绘制股票走势线 (绿色上升)
+let path = NSBezierPath()
+path.lineWidth = 60
+path.lineCapStyle = .round
+path.lineJoinStyle = .round
+path.move(to: NSPoint(x: 200, y: 300))
+path.line(to: NSPoint(x: 400, y: 450))
+path.line(to: NSPoint(x: 600, y: 350))
+path.line(to: NSPoint(x: 800, y: 700))
+NSColor(red: 0.2, green: 0.8, blue: 0.2, alpha: 1.0).setStroke()
+path.stroke()
+
+// 3. 绘制上涨箭头
+let arrowPath = NSBezierPath()
+arrowPath.move(to: NSPoint(x: 700, y: 700))
+arrowPath.line(to: NSPoint(x: 800, y: 700))
+arrowPath.line(to: NSPoint(x: 800, y: 600))
+arrowPath.lineWidth = 60
+arrowPath.lineCapStyle = .round
+arrowPath.lineJoinStyle = .round
+arrowPath.stroke()
+
+image.unlockFocus()
+
+if let tiff = image.tiffRepresentation, let bitmap = NSBitmapImageRep(data: tiff) {
+    let pngData = bitmap.representation(using: .png, properties: [:])
+    try? pngData?.write(to: URL(fileURLWithPath: "icon_1024.png"))
+}
+EOF
+
+swift create_icon.swift
+
+# 使用 sips 生成各个尺寸的图标
+sips -z 1024 1024 icon_1024.png --out "${ICONSET_DIR}/icon_512x512@2x.png" > /dev/null 2>&1
+sips -z 512 512 icon_1024.png --out "${ICONSET_DIR}/icon_512x512.png" > /dev/null 2>&1
+sips -z 512 512 icon_1024.png --out "${ICONSET_DIR}/icon_256x256@2x.png" > /dev/null 2>&1
+sips -z 256 256 icon_1024.png --out "${ICONSET_DIR}/icon_256x256.png" > /dev/null 2>&1
+sips -z 256 256 icon_1024.png --out "${ICONSET_DIR}/icon_128x128@2x.png" > /dev/null 2>&1
+sips -z 128 128 icon_1024.png --out "${ICONSET_DIR}/icon_128x128.png" > /dev/null 2>&1
+sips -z 128 128 icon_1024.png --out "${ICONSET_DIR}/icon_64x64@2x.png" > /dev/null 2>&1
+sips -z 64 64 icon_1024.png --out "${ICONSET_DIR}/icon_64x64.png" > /dev/null 2>&1
+sips -z 64 64 icon_1024.png --out "${ICONSET_DIR}/icon_32x32@2x.png" > /dev/null 2>&1
+sips -z 32 32 icon_1024.png --out "${ICONSET_DIR}/icon_32x32.png" > /dev/null 2>&1
+sips -z 32 32 icon_1024.png --out "${ICONSET_DIR}/icon_16x16@2x.png" > /dev/null 2>&1
+sips -z 16 16 icon_1024.png --out "${ICONSET_DIR}/icon_16x16.png" > /dev/null 2>&1
+
+iconutil -c icns "${ICONSET_DIR}" -o "${RESOURCES_DIR}/AppIcon.icns"
+rm -rf "${ICONSET_DIR}" create_icon.swift icon_1024.png
 
 echo "App 打包完成: ${APP_BUNDLE}"
 

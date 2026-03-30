@@ -123,13 +123,19 @@ class StockViewModel: ObservableObject {
         if args.count > 1 {
             let argSymbols = Array(args[1...])
             let normalized = argSymbols.map { normalizeSymbol($0) }
-            self.symbols = normalized
-            defaults.set(normalized, forKey: savedSymbolsKey)
+            self.symbols = normalized.filter { !self.indexSymbols.contains($0) }
+            defaults.set(self.symbols, forKey: savedSymbolsKey)
             return
         }
         
-        if let savedSymbols = defaults.array(forKey: savedSymbolsKey) as? [String], !savedSymbols.isEmpty {
-            self.symbols = savedSymbols
+        if let savedSymbols = defaults.array(forKey: savedSymbolsKey) as? [String] {
+            // 过滤掉可能错误保存的大盘指数
+            self.symbols = savedSymbols.filter { !self.indexSymbols.contains($0) }
+            if self.symbols.isEmpty {
+                 let defaultSymbols = ["sh600519", "sh601318", "sz000858", "sh600036"]
+                 self.symbols = defaultSymbols
+                 defaults.set(defaultSymbols, forKey: savedSymbolsKey)
+            }
             return
         }
         
@@ -626,9 +632,17 @@ struct MainView: View {
     }
 }
 
+// --- Window Subclass for Key Input ---
+// 为了在无边框、不激活的面板中支持键盘输入，必须重写 canBecomeKey
+class FloatingPanel: NSPanel {
+    override var canBecomeKey: Bool {
+        return true
+    }
+}
+
 // --- App Structure ---
 class AppDelegate: NSObject, NSApplicationDelegate {
-    var window: NSPanel!
+    var window: FloatingPanel!
     var viewModel: StockViewModel!
     var windowManager = WindowManager()
     
@@ -639,11 +653,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // 初始大小取决于缓存的状态
         let initialSize = windowManager.isMinimized ? CGSize(width: 800, height: 40) : CGSize(width: 280, height: 500)
         
-        window = NSPanel(
+        window = FloatingPanel(
             contentRect: NSRect(x: 0, y: 0, width: initialSize.width, height: initialSize.height),
-            styleMask: [.nonactivatingPanel, .fullSizeContentView, .borderless],
+            styleMask: [.nonactivatingPanel, .fullSizeContentView, .borderless, .titled], // 必须有 titled 才能接收输入事件，但由于是全尺寸透明，视觉上仍然是无边框
             backing: .buffered, defer: false)
         
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
         window.isReleasedWhenClosed = false
         window.level = .mainMenu + 1
         window.isMovableByWindowBackground = true
