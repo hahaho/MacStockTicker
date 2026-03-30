@@ -1,17 +1,6 @@
 @echo off
-chcp 65001
-echo Installing dependencies...
-pip install -r requirements.txt
-
+echo Building native Windows executable...
+dotnet publish -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o dist
 echo.
-echo Ensuring config.json exists...
-if not exist "config.json" echo {"symbols": [], "is_minimized": false} > config.json
-
-echo.
-echo Building executable...
-python -m PyInstaller --noconfirm --onedir --windowed --name "WindowsStockTicker" --add-data "config.json;." stock_ticker.py
-
-echo.
-echo Build complete!
-echo Executable is located in the dist\WindowsStockTicker folder.
+echo Build completed! Check the 'dist' folder.
 pause

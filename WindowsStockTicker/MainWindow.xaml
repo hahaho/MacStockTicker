@@ -1,0 +1,127 @@
+<Window x:Class="WindowsStockTicker.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="MacStockTicker" 
+        Height="500" Width="280"
+        WindowStyle="None" 
+        AllowsTransparency="True" 
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="False"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown"
+        Loaded="Window_Loaded">
+
+    <Window.Resources>
+        <!-- 基础按钮样式 (透明底) -->
+        <Style x:Key="IconBtn" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="#88FFFFFF"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="White"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- 删除按钮样式 -->
+        <Style x:Key="DelBtn" TargetType="Button" BasedOn="{StaticResource IconBtn}">
+            <Setter Property="Foreground" Value="#ff4c4c"/>
+            <Setter Property="Background" Value="#80000000"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-2,0,0"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid x:Name="RootGrid">
+        <!-- 背景毛玻璃模拟 (深色半透明带边框) -->
+        <Border x:Name="BgBorder" Background="#D91E1E20" CornerRadius="16" BorderBrush="#26FFFFFF" BorderThickness="1" />
+
+        <!-- ================= 展开模式视图 ================= -->
+        <Grid x:Name="ExpandedView" Margin="14">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- 头部 -->
+            <Grid Grid.Row="0" Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="实时监控" Foreground="White" FontSize="15" FontWeight="Bold"/>
+                    <TextBlock x:Name="TimeLabel" Text="更新: --:--:--" Foreground="#99FFFFFF" FontSize="9" Margin="0,2,0,0"/>
+                </StackPanel>
+                
+                <Button Grid.Column="1" Content="▬" Style="{StaticResource IconBtn}" Width="24" Height="24" FontSize="12" Click="MinBtn_Click"/>
+                <Button Grid.Column="2" Content="×" Style="{StaticResource IconBtn}" Width="24" Height="24" FontSize="18" Foreground="#CCFF4C4C" Click="CloseBtn_Click" Margin="4,0,0,0"/>
+            </Grid>
+
+            <!-- 输入框区 -->
+            <Grid Grid.Row="1" Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Border Background="#66000000" CornerRadius="6">
+                    <TextBox x:Name="InputBox" Background="Transparent" Foreground="White" BorderThickness="0" 
+                             VerticalContentAlignment="Center" Padding="6" FontSize="12" 
+                             KeyDown="InputBox_KeyDown"/>
+                </Border>
+                <Button Grid.Column="1" Content="+" Style="{StaticResource IconBtn}" Width="28" Height="28" FontSize="20" Foreground="White" Click="AddBtn_Click" Margin="4,0,0,0"/>
+            </Grid>
+
+            <!-- 大盘指数横向卡片 -->
+            <Border Grid.Row="2" Background="#4C000000" CornerRadius="10" Margin="0,0,0,8" Padding="5">
+                <StackPanel x:Name="IndicesPanel" Orientation="Horizontal" HorizontalAlignment="Center"/>
+            </Border>
+
+            <!-- 个股滚动列表 -->
+            <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled" Background="Transparent" BorderThickness="0">
+                <StackPanel x:Name="StocksPanel" Orientation="Vertical"/>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- ================= 跑马灯模式视图 ================= -->
+        <Grid x:Name="MinimizedView" Visibility="Collapsed" Margin="10,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            
+            <Button Grid.Column="0" Content="+" Style="{StaticResource IconBtn}" Width="24" Height="24" FontSize="18" Click="MaxBtn_Click"/>
+            
+            <!-- 跑马灯画布 -->
+            <Canvas Grid.Column="1" x:Name="MarqueeCanvas" ClipToBounds="True" Margin="10,0">
+                <StackPanel x:Name="MarqueePanel" Orientation="Horizontal" Canvas.Left="0" VerticalAlignment="Center" Height="40"/>
+            </Canvas>
+
+            <Button Grid.Column="2" Content="×" Style="{StaticResource IconBtn}" Width="24" Height="24" FontSize="18" Foreground="#CCFF4C4C" Click="CloseBtn_Click"/>
+        </Grid>
+    </Grid>
+</Window>

@@ -2,23 +2,23 @@
 
 这是专为 Windows 系统开发的股票悬浮监控小工具。功能和 Mac 版完全一致，同样支持半透明无边框、全局置顶、摸鱼跑马灯模式以及直接添加代码。
 
-本版本使用 `Python` 和 `PyQt5` 构建，轻量且高度兼容 Windows 10/11。
+本版本已彻底重构为 **原生 Windows (C# / WPF)** 架构，拥有极致的性能、极低的内存占用，并且没有任何冗余的 Python 依赖。
 
 ## 🚀 如何在 Windows 上运行与打包
 
 ### 1. 环境准备
-由于这是一个基于 Python 的跨平台方案，您需要在您的 Windows 电脑上安装 Python：
-1. 前往 [Python 官网](https://www.python.org/downloads/windows/) 下载并安装最新的 Python 3.x。
-2. **重要**：在安装 Python 时，务必勾选底部的 **"Add Python to PATH"**（将 Python 添加到环境变量）。
+您需要安装微软官方的 `.NET 8.0 SDK`：
+- 前往 [微软 .NET 下载页](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
+- 下载并安装 **.NET SDK 8.0 (Windows x64)**
 
-### 2. 编译打包为 .exe 程序
+### 2. 编译打包为单个 .exe 程序
 1. 下载或 Clone 此代码库，进入 `WindowsStockTicker` 文件夹。
 2. 双击运行 `build.bat` 脚本。
-3. 脚本会自动下载所需的依赖库（PyQt5, requests）并开始打包。
-4. 等待黑色控制台窗口显示“打包完成！”即可。
+3. 脚本会自动调用底层的 `dotnet publish`，将其编译为一个极度精简的单文件 `.exe`。
+4. 等待黑色控制台窗口显示“编译完成！”即可。
 
 ### 3. 运行程序
-打包完成后，打开 `dist/WindowsStockTicker` 文件夹。
+打包完成后，打开 `dist` 文件夹。
 双击 `WindowsStockTicker.exe` 即可运行。
 *(您可以右键该 .exe 文件，选择“发送到 -> 桌面快捷方式”，方便以后使用。)*
 
