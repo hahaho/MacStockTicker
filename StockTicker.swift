@@ -658,9 +658,13 @@ struct MainView: View {
 }
 
 // --- Window Subclass for Key Input & Shortcuts ---
-// 为了在无边框、不激活的面板中支持键盘输入，必须重写 canBecomeKey
+// 为了在无边框、不激活的面板中支持键盘输入，必须重写 canBecomeKey 和 canBecomeMain
 class FloatingPanel: NSPanel {
     override var canBecomeKey: Bool {
+        return true
+    }
+    
+    override var canBecomeMain: Bool {
         return true
     }
     
@@ -699,11 +703,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         window = FloatingPanel(
             contentRect: NSRect(x: 0, y: 0, width: initialSize.width, height: initialSize.height),
-            styleMask: [.nonactivatingPanel, .fullSizeContentView, .borderless, .titled], // 必须有 titled 才能接收输入事件，但由于是全尺寸透明，视觉上仍然是无边框
+            styleMask: [.nonactivatingPanel, .fullSizeContentView, .borderless],
             backing: .buffered, defer: false)
         
-        window.titlebarAppearsTransparent = true
-        window.titleVisibility = .hidden
         window.isReleasedWhenClosed = false
         window.level = .mainMenu + 1
         window.isMovableByWindowBackground = true
