@@ -529,6 +529,10 @@ struct ExpandedView: View {
                         if !newSymbol.isEmpty {
                             viewModel.addStock(newSymbol)
                             newSymbol = ""
+                            // 提交后收起键盘焦点，以便让用户立刻看到下方滚动的股票列表
+                            DispatchQueue.main.async {
+                                NSApp.keyWindow?.makeFirstResponder(nil)
+                            }
                         }
                     }
                 
@@ -536,6 +540,10 @@ struct ExpandedView: View {
                     if !newSymbol.isEmpty {
                         viewModel.addStock(newSymbol)
                         newSymbol = ""
+                        // 点击添加后同样取消焦点
+                        DispatchQueue.main.async {
+                            NSApp.keyWindow?.makeFirstResponder(nil)
+                        }
                     }
                 }) {
                     Image(systemName: "plus.circle.fill")
@@ -649,11 +657,30 @@ struct MainView: View {
     }
 }
 
-// --- Window Subclass for Key Input ---
+// --- Window Subclass for Key Input & Shortcuts ---
 // 为了在无边框、不激活的面板中支持键盘输入，必须重写 canBecomeKey
 class FloatingPanel: NSPanel {
     override var canBecomeKey: Bool {
         return true
+    }
+    
+    // 手动处理复制、粘贴、全选等快捷键，因为没有标准的 MainMenu 响应链
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if event.modifierFlags.contains(.command) {
+            switch event.charactersIgnoringModifiers {
+            case "x":
+                if NSApp.sendAction(#selector(NSText.cut(_:)), to: nil, from: self) { return true }
+            case "c":
+                if NSApp.sendAction(#selector(NSText.copy(_:)), to: nil, from: self) { return true }
+            case "v":
+                if NSApp.sendAction(#selector(NSText.paste(_:)), to: nil, from: self) { return true }
+            case "a":
+                if NSApp.sendAction(#selector(NSText.selectAll(_:)), to: nil, from: self) { return true }
+            default:
+                break
+            }
+        }
+        return super.performKeyEquivalent(with: event)
     }
 }
 
