@@ -146,11 +146,16 @@ class StockViewModel: ObservableObject {
     
     func addStock(_ symbol: String) {
         let normalized = normalizeSymbol(symbol)
+        
+        // 确保不仅去重，并且排除大盘指数
         if !symbols.contains(normalized) && !indexSymbols.contains(normalized) {
+            // 先将之前的列表备份，万一接口查不到，还可以撤销
             symbols.append(normalized)
             let defaults = UserDefaults.standard
             let savedSymbolsKey = "SavedStockSymbols"
             defaults.set(symbols, forKey: savedSymbolsKey)
+            
+            // 立即发起一次网络请求，而不是等5秒定时器
             fetchStocks()
         }
     }
@@ -209,9 +214,13 @@ class StockViewModel: ObservableObject {
             
             let parts = dataStr.components(separatedBy: ",")
             if parts.count >= 32 {
+                // 如果返回的名称为空，说明股票代码错误或已退市
+                let name = parts[0].trimmingCharacters(in: .whitespacesAndNewlines)
+                if name.isEmpty { continue }
+                
                 let info = StockInfo(
                     symbol: String(symbol),
-                    name: parts[0],
+                    name: name,
                     price: Double(parts[3]) ?? 0.0,
                     open: Double(parts[1]) ?? 0.0,
                     lastClose: Double(parts[2]) ?? 0.0,
@@ -236,6 +245,14 @@ class StockViewModel: ObservableObject {
                 guard let aIndex = self.indexSymbols.firstIndex(of: a.symbol),
                       let bIndex = self.indexSymbols.firstIndex(of: b.symbol) else { return false }
                 return aIndex < bIndex
+            }
+            
+            // 过滤掉请求失败的无效代码（保留有效的 symbols）
+            let validSymbols = newStocks.map { $0.symbol }
+            if validSymbols.count != self.symbols.count {
+                self.symbols = self.symbols.filter { validSymbols.contains($0) }
+                let defaults = UserDefaults.standard
+                defaults.set(self.symbols, forKey: "SavedStockSymbols")
             }
             
             self.stocks = newStocks.sorted { (a, b) -> Bool in
