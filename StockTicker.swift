@@ -138,6 +138,25 @@ class StockViewModel: ObservableObject {
         defaults.set(defaultSymbols, forKey: savedSymbolsKey)
     }
     
+    func addStock(_ symbol: String) {
+        let normalized = normalizeSymbol(symbol)
+        if !symbols.contains(normalized) && !indexSymbols.contains(normalized) {
+            symbols.append(normalized)
+            let defaults = UserDefaults.standard
+            let savedSymbolsKey = "SavedStockSymbols"
+            defaults.set(symbols, forKey: savedSymbolsKey)
+            fetchStocks()
+        }
+    }
+    
+    func removeStock(_ symbol: String) {
+        symbols.removeAll { $0 == symbol }
+        let defaults = UserDefaults.standard
+        let savedSymbolsKey = "SavedStockSymbols"
+        defaults.set(symbols, forKey: savedSymbolsKey)
+        stocks.removeAll { $0.symbol == symbol }
+    }
+    
     private func normalizeSymbol(_ s: String) -> String {
         if s.count == 6 && CharacterSet.decimalDigits.isSuperset(of: CharacterSet(charactersIn: s)) {
             return (s.hasPrefix("6") || s.hasPrefix("9") || s.hasPrefix("5")) ? "sh\(s)" : "sz\(s)"
@@ -350,6 +369,9 @@ struct IndexRow: View {
 
 struct StockRow: View {
     let stock: StockInfo
+    @ObservedObject var viewModel: StockViewModel
+    @State private var isHovered = false
+    
     var body: some View {
         VStack(spacing: 4) {
             HStack(alignment: .bottom) {
@@ -391,6 +413,26 @@ struct StockRow: View {
         .background(Color.black.opacity(0.3))
         .cornerRadius(10)
         .shadow(color: .black.opacity(0.5), radius: 1, x: 0, y: 1)
+        .overlay(
+            Group {
+                if isHovered {
+                    Button(action: {
+                        viewModel.removeStock(stock.symbol)
+                    }) {
+                        Image(systemName: "trash.circle.fill")
+                            .foregroundColor(.red.opacity(0.8))
+                            .font(.system(size: 20))
+                            .padding(4)
+                            .background(Color.black.opacity(0.5).clipShape(Circle()))
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .position(x: 235, y: 10)
+                }
+            }
+        )
+        .onHover { hovering in
+            isHovered = hovering
+        }
     }
 }
 
@@ -412,6 +454,7 @@ struct IndicatorItem: View {
 struct ExpandedView: View {
     @ObservedObject var viewModel: StockViewModel
     @EnvironmentObject var windowManager: WindowManager
+    @State private var newSymbol: String = ""
     
     var body: some View {
         VStack(spacing: 0) {
@@ -450,6 +493,37 @@ struct ExpandedView: View {
             .padding(.top, 14)
             .padding(.bottom, 8)
             
+            // Add Stock Input
+            HStack {
+                TextField("输入代码 (如 600519)", text: $newSymbol)
+                    .textFieldStyle(PlainTextFieldStyle())
+                    .padding(6)
+                    .background(Color.black.opacity(0.4))
+                    .cornerRadius(6)
+                    .foregroundColor(.white)
+                    .font(.system(size: 12))
+                    .onSubmit {
+                        if !newSymbol.isEmpty {
+                            viewModel.addStock(newSymbol)
+                            newSymbol = ""
+                        }
+                    }
+                
+                Button(action: {
+                    if !newSymbol.isEmpty {
+                        viewModel.addStock(newSymbol)
+                        newSymbol = ""
+                    }
+                }) {
+                    Image(systemName: "plus.circle.fill")
+                        .foregroundColor(.white)
+                        .font(.system(size: 18))
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .padding(.horizontal, 14)
+            .padding(.bottom, 8)
+            
             // Market Indices
             if !viewModel.indices.isEmpty {
                 HStack(spacing: 0) {
@@ -471,7 +545,7 @@ struct ExpandedView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 8) {
                     ForEach(viewModel.stocks) { stock in
-                        StockRow(stock: stock)
+                        StockRow(stock: stock, viewModel: viewModel)
                     }
                 }
                 .padding(.horizontal, 14)
